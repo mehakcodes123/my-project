@@ -1,0 +1,303 @@
+
+CREATE DATABASE University;
+USE University;
+
+
+-- Create Department table
+CREATE TABLE Department (
+    department_id INT PRIMARY KEY, 
+    department_name VARCHAR(100) NOT NULL UNIQUE, 
+    office_location VARCHAR(100) NOT NULL
+);
+
+
+-- Create Faculty table 
+CREATE TABLE Faculty (
+    faculty_id INT PRIMARY KEY, 
+    faculty_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL, 
+    department_id INT NOT NULL, 
+    FOREIGN KEY (department_id) REFERENCES Department(department_id)
+);
+
+
+-- Create Student table 
+CREATE TABLE Student (
+    student_id INT PRIMARY KEY, 
+    student_name VARCHAR(100) NOT NULL, 
+    email VARCHAR(100) UNIQUE NOT NULL,
+    phone VARCHAR(15) UNIQUE,
+    department_id INT NOT NULL, 
+    admission_year INT CHECK (admission_year >= 2015), 
+    FOREIGN KEY (department_id) REFERENCES Department(department_id) 
+);
+
+
+-- Create Course table 
+CREATE TABLE Course (
+    course_id INT PRIMARY KEY, 
+    course_name VARCHAR(100) NOT NULL, 
+    credits INT CHECK (credits BETWEEN 1 AND 5), 
+    department_id INT NOT NULL, 
+    faculty_id INT NOT NULL, 
+    FOREIGN KEY (department_id) REFERENCES Department(department_id), 
+    FOREIGN KEY (faculty_id) REFERENCES Faculty(faculty_id) 
+);
+
+
+-- Create Enrollment table 
+CREATE TABLE Enrollment (
+    enrollment_id INT PRIMARY KEY, 
+	student_id INT NOT NULL, 
+    course_id INT NOT NULL, 
+    semester VARCHAR(20) NOT NULL, 
+    grade CHAR(2), -- Grade obtained
+    FOREIGN KEY (student_id) REFERENCES Student(student_id), 
+	FOREIGN KEY (course_id) REFERENCES Course(course_id), 
+    UNIQUE (student_id, course_id, semester) 
+);
+
+
+-- Insert sample records into Department table
+INSERT INTO Department VALUES
+(1,'Computer Science','Block A'),
+(2,'Electronics','Block B'),
+(3,'Mechanical','Block C'),
+(4,'Mathematics','Block D'),
+(5,'Physics','Block E');
+
+
+-- Insert faculty records
+INSERT INTO Faculty VALUES
+(101,'Dr. Sharma','sharma@univ.edu',1),
+(102,'Dr. Verma','verma@univ.edu',2),
+(103,'Dr. Khan','khan@univ.edu',3),
+(104,'Dr. Roy','roy@univ.edu',4),
+(105,'Dr. Mehta','mehta@univ.edu',1);
+
+
+-- Insert student records
+INSERT INTO Student VALUES
+(201,'Aman Gupta','aman@gmail.com','9876543210',1,2022),
+(202,'Riya Singh','riya@gmail.com','9876543211',1,2021),
+(203,'Karan Patel','karan@gmail.com','9876543212',2,2020),
+(204,'Sneha Kapoor','sneha@gmail.com','9876543213',3,2022),
+(205,'Rahul Jain','rahul@gmail.com','9876543214',4,2019),
+(206,'Priya Das','priya@gmail.com','9876543215',5,2023),
+(207,'Arjun Nair','arjun@gmail.com','9876543216',1,2020),
+(208,'Neha Yadav','neha@gmail.com','9876543217',2,2021),
+(209,'Vikram Rao','vikram@gmail.com','9876543218',3,2018),
+(210,'Simran Kaur','simran@gmail.com','9876543219',4,2022);
+
+
+-- Insert course records
+INSERT INTO Course VALUES
+(301,'Database Systems',4,1,101),
+(302,'Data Structures',4,1,105),
+(303,'Digital Electronics',3,2,102),
+(304,'Thermodynamics',4,3,103),
+(305,'Linear Algebra',3,4,104),
+(306,'Operating Systems',4,1,101),
+(307,'Microprocessors',3,2,102),
+(308,'Machine Design',4,3,103),
+(309,'Probability',3,4,104),
+(310,'Computer Networks',4,1,105);
+
+
+-- Insert enrollment records showing which student enrolled in which course
+INSERT INTO Enrollment VALUES
+(401,201,301,'Sem1','A'),
+(402,202,302,'Sem2','B'),
+(403,203,303,'Sem1','A'),
+(404,204,304,'Sem2','B'),
+(405,205,305,'Sem1','A'),
+(406,206,309,'Sem1','B'),
+(407,207,306,'Sem2','A'),
+(408,208,307,'Sem1','C'),
+(409,209,308,'Sem2','B'),
+(410,210,305,'Sem2','A');
+
+
+-- Create a VIEW to show student name, course name, semester and grade
+CREATE VIEW StudentCourseView AS
+SELECT s.student_name, c.course_name, e.semester, e.grade
+FROM Student s
+JOIN Enrollment e ON s.student_id = e.student_id
+JOIN Course c ON e.course_id = c.course_id;
+
+
+-- Display all student records
+SELECT * FROM Student;
+
+
+-- Show students admitted from 2021 onwards
+SELECT student_name, admission_year
+FROM Student
+WHERE admission_year >= 2021;
+
+
+-- Display all department names
+SELECT department_name
+FROM Department;
+
+
+-- Join Student and Department tables to show which student belongs to which department
+SELECT s.student_name, d.department_name
+FROM Student s
+JOIN Department d ON s.department_id = d.department_id;
+
+
+-- Join Course and Faculty tables to show which faculty teaches which course
+SELECT c.course_name, f.faculty_name
+FROM Course c
+JOIN Faculty f ON c.faculty_id = f.faculty_id;
+
+
+-- Count total number of students
+SELECT COUNT(*) AS TotalStudents FROM Student;
+
+
+-- Count number of students in each department
+SELECT department_id, COUNT(*) AS StudentsPerDepartment
+FROM Student
+GROUP BY department_id;
+
+
+-- Find students who received grade 'A'
+SELECT student_name
+FROM Student
+WHERE student_id IN
+(SELECT student_id FROM Enrollment WHERE grade = 'A');
+
+
+-- Add a new column 'gender' to Student table
+ALTER TABLE Student
+ADD gender VARCHAR(10);
+
+
+-- Add salary column to Faculty table
+ALTER TABLE Faculty
+ADD salary DECIMAL(10,2);
+
+
+-- Add semester offered column to Course table
+ALTER TABLE Course
+ADD semester_offered VARCHAR(20);
+
+
+-- Add contact email column to Department table
+ALTER TABLE Department
+ADD contact_email VARCHAR(100);
+
+
+-- Add attendance percentage column to Enrollment table
+ALTER TABLE Enrollment
+ADD attendance_percentage DECIMAL(5,2);
+
+
+-- Add constraint to allow only Male or Female in gender column
+ALTER TABLE Student
+ADD CONSTRAINT chk_gender CHECK (gender IN ('Male','Female'));
+
+
+-- Update department contact emails
+UPDATE Department SET contact_email='cs@univ.edu' WHERE department_id=1;
+UPDATE Department SET contact_email='electronics@univ.edu' WHERE department_id=2;
+
+
+-- Update faculty salaries
+UPDATE Faculty SET salary=85000 WHERE faculty_id=101;
+UPDATE Faculty SET salary=78000 WHERE faculty_id=102;
+UPDATE Faculty SET salary=72000 WHERE faculty_id=103;
+
+
+-- Update semester offered for courses
+UPDATE Course SET semester_offered='Sem1' WHERE course_id IN (301,303,305,309);
+UPDATE Course SET semester_offered='Sem2' WHERE course_id IN (302,304,306,307,308,310);
+
+
+-- Update gender for some students
+UPDATE Student SET gender='Male' WHERE student_id=201;
+UPDATE Student SET gender='Female' WHERE student_id=202;
+UPDATE Student SET gender='Male' WHERE student_id=203;
+
+
+-- Insert additional student records including gender
+INSERT INTO Student VALUES
+(211,'Deepak Kumar','deepak@gmail.com','9876543220',1,2023,'Male'),
+(212,'Anjali Verma','anjali@gmail.com','9876543221',2,2022,'Female'),
+(213,'Rohit Sharma','rohit@gmail.com','9876543222',3,2021,'Male'),
+(214,'Pooja Mehra','pooja@gmail.com','9876543223',4,2020,'Female'),
+(215,'Sahil Arora','sahil@gmail.com','9876543224',5,2023,'Male');
+
+
+-- Insert enrollment records with attendance percentage
+INSERT INTO Enrollment VALUES
+(411,211,301,'Sem1','A',88.5),
+(412,212,303,'Sem1','B',76.0),
+(413,213,304,'Sem2','A',91.2),
+(414,214,305,'Sem1','C',69.4),
+(415,215,309,'Sem1','B',82.7);
+
+
+-- Display students admitted after 2022 with gender
+SELECT student_name, gender, admission_year
+FROM Student
+WHERE admission_year >= 2022;
+
+
+-- Display all female students
+SELECT student_name
+FROM Student
+WHERE gender='Female';
+
+
+-- Show faculty salaries sorted from highest to lowest
+SELECT faculty_name, salary
+FROM Faculty
+ORDER BY salary DESC;
+
+
+-- Show students with attendance greater than 80%
+SELECT s.student_name, c.course_name, e.grade, e.attendance_percentage
+FROM Student s
+JOIN Enrollment e ON s.student_id=e.student_id
+JOIN Course c ON e.course_id=c.course_id
+WHERE e.attendance_percentage > 80;
+
+
+-- Count total students in each department
+SELECT department_id, COUNT(student_id) AS total_students
+FROM Student
+GROUP BY department_id;
+
+
+-- Calculate average salary of faculty
+SELECT AVG(salary) AS average_salary
+FROM Faculty;
+
+
+-- Find students who got grade A
+SELECT student_name
+FROM Student
+WHERE student_id IN
+(SELECT student_id FROM Enrollment WHERE grade='A');
+
+
+-- Count number of students enrolled in each course
+SELECT c.course_name, COUNT(e.student_id) AS enrolled_students
+FROM Course c
+LEFT JOIN Enrollment e ON c.course_id=e.course_id
+GROUP BY c.course_name;
+
+
+-- Show students belonging to Computer Science department
+SELECT s.student_name, d.department_name
+FROM Student s
+JOIN Department d ON s.department_id=d.department_id
+WHERE d.department_name='Computer Science';
+
+
+-- Find the highest attendance percentage among all enrollments
+SELECT MAX(attendance_percentage) AS highest_attendance
+FROM Enrollment;
